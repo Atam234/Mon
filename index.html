@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SUKAT — Sukatin ang Taas Mo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171c;
+    --panel:#1c2027;
+    --panel-2:#22262f;
+    --line:#2c313b;
+    --yellow:#f5b700;
+    --yellow-dim:#8a6b1f;
+    --teal:#4fd1c5;
+    --text:#ece9e2;
+    --muted:#8b93a1;
+    --danger:#e5654a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-left:34px;
+    overflow-x:hidden;
+  }
+  @media (max-width:640px){ body{ padding-left:24px; } }
+
+  /* Vertical tape ruler - signature element */
+  #ruler{
+    position:fixed;
+    left:0; top:0; bottom:0;
+    width:34px;
+    background:linear-gradient(180deg,#1a1d23,#14171c);
+    border-right:1px solid var(--line);
+    z-index:50;
+    overflow:hidden;
+  }
+  @media (max-width:640px){ #ruler{ width:24px; } }
+  .tick{
+    position:absolute; right:0; height:1px; background:var(--muted); opacity:.45;
+  }
+  .tick.major{ opacity:.9; background:var(--text); }
+  .tick-label{
+    position:absolute; right:12px; transform:translateY(-50%);
+    font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted);
+  }
+  #rulerMarker{
+    position:absolute; right:0; width:100%; height:3px; background:var(--yellow);
+    box-shadow:0 0 10px var(--yellow);
+    transition:top 1.1s cubic-bezier(.2,.9,.25,1);
+    top:100%;
+    opacity:0;
+  }
+  #rulerMarker.show{ opacity:1; }
+
+  main{ max-width:640px; margin:0 auto; padding:36px 20px 80px; }
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:.18em; color:var(--teal);
+    text-transform:uppercase; margin-bottom:6px;
+  }
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:64px; line-height:.95; letter-spacing:.01em;
+    margin:0 0 8px; color:var(--text);
+  }
+  .sub{ color:var(--muted); font-size:15px; margin-bottom:32px; max-width:46ch; }
+
+  .step{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+    margin-bottom:18px;
+    display:none;
+  }
+  .step.active{ display:block; }
+  .step-head{
+    display:flex; align-items:baseline; gap:10px; margin-bottom:14px;
+  }
+  .step-num{
+    font-family:'JetBrains Mono',monospace; color:var(--yellow); font-size:13px;
+  }
+  .step-title{ font-weight:700; font-size:17px; }
+  .step p{ color:var(--muted); font-size:14px; line-height:1.55; margin:0 0 14px; }
+
+  label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  input[type=number]{
+    width:100%; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--text); padding:11px 12px; border-radius:7px;
+    font-family:'JetBrains Mono',monospace; font-size:15px; margin-bottom:14px;
+  }
+  input[type=number]:focus{ outline:none; border-color:var(--teal); }
+
+  .presets{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .preset{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    font-size:12.5px; padding:7px 11px; border-radius:20px; cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .preset:hover{ border-color:var(--teal); }
+  .preset.picked{ border-color:var(--yellow); color:var(--yellow); }
+
+  button.primary{
+    background:var(--yellow); color:#1a1400; border:none;
+    font-weight:700; font-size:14.5px; padding:13px 20px; border-radius:8px;
+    cursor:pointer; width:100%; font-family:'Inter',sans-serif;
+  }
+  button.primary:hover{ filter:brightness(1.08); }
+  button.primary:disabled{ opacity:.4; cursor:not-allowed; }
+  button.ghost{
+    background:transparent; border:1px solid var(--line); color:var(--muted);
+    font-size:13px; padding:10px 16px; border-radius:8px; cursor:pointer;
+    font-family:'Inter',sans-serif; margin-top:10px; width:100%;
+  }
+  button.ghost:hover{ border-color:var(--teal); color:var(--teal); }
+
+  .camwrap{ position:relative; border-radius:8px; overflow:hidden; background:#000; margin-bottom:14px; }
+  video, canvas{ width:100%; display:block; border-radius:8px; }
+  .camctrls{ display:flex; gap:10px; margin-bottom:6px; }
+  .camctrls button{ flex:1; }
+
+  .marker-status{
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;
+  }
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    padding:6px 10px; border-radius:6px; background:var(--panel-2);
+    border:1px solid var(--line); color:var(--muted);
+  }
+  .chip.done{ color:var(--teal); border-color:var(--teal); }
+  .chip.now{ color:var(--yellow); border-color:var(--yellow); }
+
+  .result{
+    text-align:center; padding:10px 0 4px;
+  }
+  .result .num{
+    font-family:'Bebas Neue',sans-serif; font-size:88px; color:var(--yellow); line-height:1;
+  }
+  .result .unit{ font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:14px; }
+  .result .alt{ margin-top:8px; color:var(--muted); font-size:13.5px; font-family:'JetBrains Mono',monospace; }
+
+  .warn{
+    background:rgba(229,101,74,.1); border:1px solid var(--danger); color:#f2a495;
+    font-size:13px; padding:10px 12px; border-radius:8px; margin-bottom:14px; display:none;
+  }
+  .warn.show{ display:block; }
+
+  footer{ color:var(--muted); font-size:12px; text-align:center; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div id="ruler"></div>
+
+<main>
+  <div class="eyebrow">Camera-based na sukatan</div>
+  <h1>SUKAT</h1>
+  <p class="sub">Sukatin ang taas mo gamit lang ang camera ng phone mo. Kailangan mo lang ng isang reference object na alam mo ang eksaktong taas — hal. isang pinto, poster, o karton na sinukat mo na.</p>
+
+  <!-- STEP 1: Calibration input -->
+  <div class="step active" id="step1">
+    <div class="step-head"><span class="step-num">01</span><span class="step-title">I-set ang reference height</span></div>
+    <p>Maglagay ng bagay na patayo (matangkad, katabi mong nakatayo sa parehong distansya sa camera) na alam mo ang eksaktong taas nito sa cm.</p>
+    <div class="presets">
+      <div class="preset" data-v="203">Pintuan · 203 cm</div>
+      <div class="preset" data-v="30">A4 paper (patayo) · 30 cm</div>
+      <div class="preset" data-v="100">Yardstick · 100 cm</div>
+    </div>
+    <label for="refHeight">Taas ng reference object (cm)</label>
+    <input type="number" id="refHeight" placeholder="hal. 203" min="1" step="0.1">
+    <button class="primary" id="toStep2">Tuloy sa Camera →</button>
+  </div>
+
+  <!-- STEP 2: Live camera capture -->
+  <div class="step" id="step2">
+    <div class="step-head"><span class="step-num">02</span><span class="step-title">Kunan ng larawan</span></div>
+    <p>Itayo ang reference object sa tabi mo, parehong distansya sa camera. Siguraduhing kitang-kita ang ulo hanggang paa mo AT ang buong reference object.</p>
+    <div class="warn" id="camWarn"></div>
+    <div class="camwrap"><video id="video" autoplay playsinline muted></video></div>
+    <div class="camctrls">
+      <button class="ghost" id="switchCam">🔄 Palitan ng Camera</button>
+      <button class="primary" id="captureLive">📸 Kunan</button>
+    </div>
+    <button class="ghost" id="openGallery">🖼️ Pumili na lang mula sa Gallery</button>
+    <input type="file" id="fileGallery" accept="image/*" style="display:none;">
+    <button class="ghost" id="backTo1">← Bumalik</button>
+  </div>
+
+  <!-- STEP 3: Marking points -->
+  <div class="step" id="step3">
+    <div class="step-head"><span class="step-num">03</span><span class="step-title">Markahan ang mga punto</span></div>
+    <p id="markInstruction">I-tap ang larawan sa tamang pwesto ayon sa hihingiing marker sa ibaba.</p>
+    <div class="marker-status">
+      <span class="chip" data-i="0">① Taas ng reference</span>
+      <span class="chip" data-i="1">② Ibaba ng reference</span>
+      <span class="chip" data-i="2">③ Ulo mo</span>
+      <span class="chip" data-i="3">④ Paa mo</span>
+    </div>
+    <div class="camwrap"><canvas id="canvas"></canvas></div>
+    <button class="ghost" id="undoMark">↩ Undo huling marka</button>
+    <button class="ghost" id="backTo2">← Kumuha ulit ng larawan</button>
+  </div>
+
+  <!-- STEP 4: Result -->
+  <div class="step" id="step4">
+    <div class="step-head"><span class="step-num">04</span><span class="step-title">Resulta</span></div>
+    <div class="result">
+      <div class="num" id="cmResult">--</div>
+      <div class="unit">sentimetro</div>
+      <div class="alt" id="ftResult"></div>
+    </div>
+    <button class="primary" id="restart">🔁 Sukatin Ulit</button>
+  </div>
+
+  <footer>Ang katumpakan ay depende sa angulo ng camera, distansya, at kung gaano kasingtapat sa isang plano ang ikaw at ang reference object. Para sa pinakamainam na resulta, kunan nang tuwid at pantay ang distansya.</footer>
+</main>
+
+<script>
+// ---------- Ruler (signature element) ----------
+const ruler = document.getElementById('ruler');
+const totalCm = 220; // ruler spans 0-220cm visually
+function buildRuler(){
+  ruler.querySelectorAll('.tick,.tick-label').forEach(e=>e.remove());
+  const h = ruler.clientHeight;
+  for(let cm=0; cm<=totalCm; cm+=1){
+    const pct = 1 - (cm/totalCm);
+    const y = pct*h;
+    const major = cm % 10 === 0;
+    const tick = document.createElement('div');
+    tick.className = 'tick'+(major?' major':'');
+    tick.style.top = y+'px';
+    tick.style.width = major ? '60%' : (cm%5===0?'40%':'22%');
+    ruler.appendChild(tick);
+    if(major){
+      const lbl = document.createElement('div');
+      lbl.className='tick-label';
+      lbl.style.top = y+'px';
+      lbl.textContent = cm;
+      ruler.appendChild(lbl);
+    }
+  }
+  const marker = document.createElement('div');
+  marker.id='rulerMarker';
+  ruler.appendChild(marker);
+}
+window.addEventListener('resize', buildRuler);
+buildRuler();
+
+function showOnRuler(cm){
+  const marker = document.getElementById('rulerMarker');
+  const h = ruler.clientHeight;
+  const pct = 1 - (Math.min(cm,totalCm)/totalCm);
+  requestAnimationFrame(()=>{
+    marker.style.top = (pct*h)+'px';
+    marker.classList.add('show');
+  });
+}
+
+// ---------- Step navigation ----------
+function goTo(step){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step'+step).classList.add('active');
+}
+
+// ---------- Step 1: calibration ----------
+let refCm = null;
+document.querySelectorAll('.preset').forEach(p=>{
+  p.addEventListener('click', ()=>{
+    document.querySelectorAll('.preset').forEach(x=>x.classList.remove('picked'));
+    p.classList.add('picked');
+    document.getElementById('refHeight').value = p.dataset.v;
+  });
+});
+document.getElementById('toStep2').addEventListener('click', ()=>{
+  const v = parseFloat(document.getElementById('refHeight').value);
+  if(!v || v<=0){ alert('Maglagay muna ng valid na taas ng reference object.'); return; }
+  refCm = v;
+  goTo(2);
+  startCamera();
+});
+document.getElementById('backTo1').addEventListener('click', ()=>{ stopCamera(); goTo(1); });
+
+// ---------- Step 2: live camera ----------
+const camWarn = document.getElementById('camWarn');
+const video = document.getElementById('video');
+let stream=null, facing='environment';
+
+async function startCamera(){
+  camWarn.classList.remove('show');
+  stopCamera();
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode: facing }, audio:false });
+    video.srcObject = stream;
+  }catch(e){
+    camWarn.textContent = 'Hindi ma-access ang camera. I-check ang camera permission ng site na ito sa Chrome settings, o gamitin na lang ang "Pumili mula sa Gallery" sa ibaba.';
+    camWarn.classList.add('show');
+  }
+}
+function stopCamera(){
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+}
+document.getElementById('switchCam').addEventListener('click', ()=>{
+  facing = facing==='environment' ? 'user' : 'environment';
+  startCamera();
+});
+document.getElementById('captureLive').addEventListener('click', ()=>{
+  if(!video.videoWidth){ return; }
+  const img = new Image();
+  const tmp = document.createElement('canvas');
+  tmp.width = video.videoWidth; tmp.height = video.videoHeight;
+  tmp.getContext('2d').drawImage(video,0,0);
+  img.onload = ()=>{
+    loadImageToCanvas(img);
+    stopCamera();
+    points = [];
+    updateChips();
+    goTo(3);
+  };
+  img.src = tmp.toDataURL('image/jpeg',0.92);
+});
+
+// ---------- Fallback: gallery file input ----------
+const fileGallery = document.getElementById('fileGallery');
+document.getElementById('openGallery').addEventListener('click', ()=>{ camWarn.classList.remove('show'); fileGallery.click(); });
+fileGallery.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      loadImageToCanvas(img);
+      stopCamera();
+      points = [];
+      updateChips();
+      goTo(3);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let points = []; // {x,y} in canvas coords, order: refTop, refBottom, headTop, feetBottom
+const labels = ['Taas ng reference','Ibaba ng reference','Ulo mo','Paa mo'];
+const colors = ['#4fd1c5','#4fd1c5','#f5b700','#f5b700'];
+
+function loadImageToCanvas(img){
+  const MAX_DIM = 1400;
+  let w = img.naturalWidth, h = img.naturalHeight;
+  if(w>MAX_DIM || h>MAX_DIM){
+    const scale = MAX_DIM/Math.max(w,h);
+    w = Math.round(w*scale); h = Math.round(h*scale);
+  }
+  canvas.width = w; canvas.height = h;
+  ctx.drawImage(img,0,0,w,h);
+  snapshotBase();
+}
+document.getElementById('backTo2').addEventListener('click', ()=>{ points=[]; goTo(2); startCamera(); });
+
+let baseImageData = null;
+function snapshotBase(){ baseImageData = ctx.getImageData(0,0,canvas.width,canvas.height); }
+
+canvas.addEventListener('click', (e)=>{
+  if(points.length>=4) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width/rect.width;
+  const scaleY = canvas.height/rect.height;
+  const x = (e.clientX-rect.left)*scaleX;
+  const y = (e.clientY-rect.top)*scaleY;
+  points.push({x,y});
+  drawMarker(x,y,points.length-1);
+  updateChips();
+  if(points.length===2){ drawLine(points[0],points[1],'#4fd1c5'); }
+  if(points.length===4){
+    drawLine(points[2],points[3],'#f5b700');
+    setTimeout(computeResult, 300);
+  }
+});
+
+function drawMarker(x,y,i){
+  ctx.strokeStyle = colors[i];
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x-12,y); ctx.lineTo(x+12,y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x,y-12); ctx.lineTo(x,y+12); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.stroke();
+}
+function drawLine(p1,p2,color){
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([6,5]);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+  ctx.setLineDash([]);
+}
+function updateChips(){
+  document.querySelectorAll('.chip').forEach((c,i)=>{
+    c.classList.remove('done','now');
+    if(i<points.length) c.classList.add('done');
+    else if(i===points.length) c.classList.add('now');
+  });
+  const instr = document.getElementById('markInstruction');
+  if(points.length<4){
+    instr.textContent = 'I-tap ang: ' + labels[points.length];
+  } else {
+    instr.textContent = 'Kumpleto! Kinukwenta ang resulta...';
+  }
+}
+document.getElementById('undoMark').addEventListener('click', ()=>{
+  if(points.length===0) return;
+  points.pop();
+  // redraw everything from scratch
+  const img = new Image();
+  ctx.putImageData(baseImageData,0,0);
+  points.forEach((p,i)=>drawMarker(p.x,p.y,i));
+  if(points.length>=2) drawLine(points[0],points[1],'#4fd1c5');
+  updateChips();
+});
+
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+function computeResult(){
+  const refPx = dist(points[0], points[1]);
+  const personPx = dist(points[2], points[3]);
+  if(refPx<=0){ alert('May problema sa marka ng reference. Subukan ulit.'); goTo(3); return; }
+  const heightCm = (personPx/refPx)*refCm;
+  const cmRounded = Math.round(heightCm*10)/10;
+  document.getElementById('cmResult').textContent = cmRounded;
+  const totalInches = heightCm/2.54;
+  const ft = Math.floor(totalInches/12);
+  const inch = Math.round(totalInches%12);
+  document.getElementById('ftResult').textContent = `≈ ${ft}'${inch}" · ${(heightCm/100).toFixed(2)} m`;
+  goTo(4);
+  showOnRuler(cmRounded);
+}
+
+document.getElementById('restart').addEventListener('click', ()=>{
+  points=[];
+  document.getElementById('rulerMarker').classList.remove('show');
+  document.querySelectorAll('.preset').forEach(x=>x.classList.remove('picked'));
+  document.getElementById('refHeight').value='';
+  goTo(1);
+});
+</script>
+</body>
+</html>
