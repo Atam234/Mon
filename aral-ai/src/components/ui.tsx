@@ -66,10 +66,10 @@ export function useEngineState() {
 export function EnginePill() {
   const s = useEngineState();
   const map = {
-    idle: { t: 'Walang model', c: colors.muted },
-    loading: { t: 'Nilo-load…', c: colors.accent },
+    idle: { t: 'No model', c: colors.muted },
+    loading: { t: 'Loading…', c: colors.accent },
     ready: { t: 'Offline AI ready', c: colors.primary },
-    error: { t: 'May error', c: colors.danger },
+    error: { t: 'Error', c: colors.danger },
   } as const;
   const m = map[s.status];
   return (

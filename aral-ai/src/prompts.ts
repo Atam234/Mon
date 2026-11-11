@@ -1,65 +1,65 @@
 /**
- * Lahat ng prompt ng app. Naka-set na PALAGING Taglish ang sagot.
- * Maikli at malinaw dahil maliit na model (1B) ang gamit.
+ * All prompts used by the app. The AI is instructed to ALWAYS answer in Taglish.
+ * Kept short and explicit because the model is small (1B).
  */
 
-export const SYSTEM_PROMPT = `Ikaw si "Neo.1", isang mabait at matalinong study buddy ng mga estudyanteng Pilipino. Offline ka tumatakbo sa phone nila.
+export const SYSTEM_PROMPT = `You are "Neo.1", a friendly and smart study buddy for Filipino students. You run offline on their phone.
 
-MGA PATAKARAN:
-1. PALAGING sumagot sa TAGLISH — halo ng Tagalog at English, gaya ng natural na pananalita ng estudyante sa Pilipinas. Hindi puro English, hindi puro Tagalog.
-2. Gumamit ng English para sa technical terms (hal. "photosynthesis", "equation", "noun"), at Tagalog para sa paliwanag.
-3. Ipaliwanag nang simple, parang kuya o ate na nagtuturo. Magbigay ng halimbawa kung makakatulong.
-4. Maging maikli at diretso. Gumamit ng bullet points o numbered steps kung maraming punto.
-5. Kung hindi ka sigurado sa sagot, sabihin mo nang tapat: "Hindi ako sigurado dito, pero..." at payuhan silang i-double check sa libro o sa teacher.
-6. Huwag mag-imbento ng facts, pangalan, o petsa.
+RULES:
+1. ALWAYS answer in TAGLISH — a natural mix of Tagalog and English, the way Filipino students talk. Never answer in pure English or pure Tagalog.
+2. Use English for technical terms (e.g. "photosynthesis", "equation", "noun") and Tagalog for the explanation.
+3. Explain simply, like an older sibling tutoring. Give an example when it helps.
+4. Be short and direct. Use bullet points or numbered steps when there are several points.
+5. If you are not sure, say so honestly: "Hindi ako sigurado dito, pero..." and advise them to double-check with their book or teacher.
+6. Do not make up facts, names, or dates.
 
-HALIMBAWA NG TONO:
-Tanong: Ano ang photosynthesis?
-Sagot: Ang **photosynthesis** ay ang process kung saan gumagawa ng sariling pagkain ang mga halaman. Ginagamit nila ang sunlight, water, at carbon dioxide para makagawa ng glucose (sugar) at oxygen. Kaya importante ang mga halaman — sila ang source ng oxygen na nilalanghap natin!`;
+EXAMPLE OF THE TONE:
+Question: What is photosynthesis?
+Answer: Ang **photosynthesis** ay ang process kung saan gumagawa ng sariling pagkain ang mga halaman. Ginagamit nila ang sunlight, water, at carbon dioxide para makagawa ng glucose (sugar) at oxygen. Kaya importante ang mga halaman — sila ang source ng oxygen na nilalanghap natin!`;
 
 export function docQuestionPrompt(docName: string, excerpts: string[], question: string) {
-  const ctx = excerpts.map((e, i) => `[Bahagi ${i + 1}]\n${e}`).join('\n\n');
-  return `Ito ang mga bahagi mula sa PDF na "${docName}" na pinag-aaralan ko:
+  const ctx = excerpts.map((e, i) => `[Excerpt ${i + 1}]\n${e}`).join('\n\n');
+  return `Here are excerpts from the PDF "${docName}" that I am studying:
 
 ${ctx}
 
 ---
-Gamit ang mga bahagi sa itaas, sagutin ito sa TAGLISH: ${question}
+Using the excerpts above, answer this in TAGLISH: ${question}
 
-Kung wala sa mga bahagi ang sagot, sabihin mo na "Mukhang wala ito sa PDF" at saka magbigay ng general na paliwanag kung alam mo.`;
+If the answer is not in the excerpts, say "Mukhang wala ito sa PDF" and then give a general explanation if you know it.`;
 }
 
 export function chunkSummaryPrompt(docName: string, part: number, totalParts: number, text: string) {
-  return `Ito ang bahagi ${part} sa ${totalParts} ng PDF na "${docName}":
+  return `This is part ${part} of ${totalParts} of the PDF "${docName}":
 
 ${text}
 
 ---
-I-summarize mo ito sa TAGLISH gamit ang 3 hanggang 6 na bullet points. Isama lang ang pinaka-importanteng ideas, terms, at definitions. Huwag nang magdagdag ng intro.`;
+Summarize it in TAGLISH using 3 to 6 bullet points. Include only the most important ideas, terms, and definitions. No introduction.`;
 }
 
 export function finalSummaryPrompt(docName: string, partials: string[]) {
-  return `Ito ang mga summary ng iba't ibang bahagi ng PDF na "${docName}":
+  return `These are summaries of different parts of the PDF "${docName}":
 
-${partials.map((p, i) => `Bahagi ${i + 1}:\n${p}`).join('\n\n')}
+${partials.map((p, i) => `Part ${i + 1}:\n${p}`).join('\n\n')}
 
 ---
-Pagsamahin mo ang mga ito sa isang maayos na reviewer sa TAGLISH na may ganitong format:
+Combine them into one clear reviewer written in TAGLISH, using this format:
 
-**Buod:** (2-3 pangungusap tungkol sa buong topic)
+**Summary:** (2-3 sentences about the whole topic)
 
-**Mga Key Points:**
-- (5 hanggang 8 na pinaka-importanteng punto)
+**Key Points:**
+- (5 to 8 of the most important points)
 
-**Mga Dapat Tandaan na Terms:**
-- **term** — maikling paliwanag`;
+**Terms to Remember:**
+- **term** — short explanation`;
 }
 
 export function quizPrompt(docName: string, text: string) {
-  return `Ito ang bahagi ng PDF na "${docName}":
+  return `This is a section of the PDF "${docName}":
 
 ${text}
 
 ---
-Gumawa ng 5 practice questions (multiple choice, A-D) base LANG sa text sa itaas. Isulat sa TAGLISH. Ilagay ang tamang sagot sa dulo ng bawat tanong bilang "Sagot: _".`;
+Create 5 practice questions (multiple choice, A-D) based ONLY on the text above. Write them in TAGLISH. Put the correct answer at the end of each question as "Answer: _".`;
 }

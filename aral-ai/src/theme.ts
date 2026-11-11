@@ -1,13 +1,13 @@
 export const colors = {
-  bg: '#F5F2EA', // papel
+  bg: '#F5F2EA', // paper
   card: '#FFFFFF',
   ink: '#1D2430',
   muted: '#6A7280',
   line: '#E3DED2',
-  primary: '#2E6B5E', // berdeng pisara
+  primary: '#2E6B5E', // chalkboard green
   primaryDark: '#22524A',
   primarySoft: '#DCEBE6',
-  accent: '#E8A33A', // dilaw na lapis
+  accent: '#E8A33A', // pencil yellow
   accentSoft: '#FBEBD2',
   danger: '#C2483B',
   userBubble: '#2E6B5E',

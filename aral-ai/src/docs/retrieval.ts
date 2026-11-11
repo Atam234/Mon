@@ -1,7 +1,7 @@
 /**
- * Simpleng offline na "search" sa loob ng PDF (BM25) para mahanap ang mga
- * bahaging may kinalaman sa tanong — kasi hindi kasya ang buong PDF sa
- * memory ng maliit na AI model.
+ * Simple offline search inside a PDF (BM25) to find the passages
+ * related to a question — the whole PDF does not fit in the
+ * context of a small AI model.
  */
 
 export type Chunk = { page: number; text: string };
@@ -68,7 +68,7 @@ export function search(chunks: Chunk[], query: string, topK = 3): Chunk[] {
     for (const w of d) tf.set(w, (tf.get(w) ?? 0) + 1);
     let score = 0;
     for (const term of q) {
-      // tumanggap din ng bahagyang tugma (hal. "cell" ~ "cells")
+      // also accept partial matches (e.g. "cell" ~ "cells")
       let f = tf.get(term) ?? 0;
       if (!f && term.length > 3) {
         for (const [w, c] of tf) if (w.startsWith(term) || term.startsWith(w)) f += c * 0.5;
@@ -86,11 +86,11 @@ export function search(chunks: Chunk[], query: string, topK = 3): Chunk[] {
     .slice(0, topK)
     .map((s) => s.i);
   if (!top.length) return chunks.slice(0, topK);
-  // ibalik sa pagkakasunod sa PDF para mas natural basahin
+  // return in document order so it reads naturally
   return top.sort((a, b) => a - b).map((i) => chunks[i]);
 }
 
-/** Hatiin ang text para sa summary (map-reduce). */
+/** Split text for summarization (map-reduce). */
 export function splitForSummary(pages: string[], from: number, to: number, size = 2800): string[] {
   const text = pages
     .slice(from - 1, to)

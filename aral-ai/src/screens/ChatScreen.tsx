@@ -25,7 +25,7 @@ type Msg = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
-  /** Ang aktwal na pinadala sa AI (may kasamang bahagi ng PDF). */
+  /** The actual text sent to the AI (including PDF excerpts). */
   modelText?: string;
   docName?: string;
   pages?: number[];
@@ -33,10 +33,10 @@ type Msg = {
 
 const KEY = 'aral-ai:chat:v1';
 const SUGGESTIONS = [
-  'Ano ang pagkakaiba ng mitosis at meiosis?',
-  'Paano i-solve ang 2x + 5 = 15? Step by step.',
-  'Explain mo ang Pythagorean theorem nang simple.',
-  'Bigyan mo ako ng tips sa pag-review para sa exam.',
+  'What is the difference between mitosis and meiosis?',
+  'How do I solve 2x + 5 = 15? Step by step.',
+  'Explain the Pythagorean theorem simply.',
+  'Give me tips for reviewing for an exam.',
 ];
 
 export function ChatScreen() {
@@ -61,7 +61,7 @@ export function ChatScreen() {
     const q = (textArg ?? input).trim();
     if (!q || busy) return;
     if (es.status !== 'ready') {
-      Alert.alert('Wala pang AI model', 'I-download o i-import muna ang model sa "AI Model" tab.', [
+      Alert.alert('No AI model yet', 'Download or import the model first in the "AI Model" tab.', [
         { text: 'OK', onPress: () => setTab('model') },
       ]);
       return;
@@ -87,7 +87,7 @@ export function ChatScreen() {
     setStreaming('');
     activateKeepAwakeAsync('gen').catch(() => {});
 
-    // Para makatipid sa memory: buong PDF context lang sa pinakahuling tanong.
+    // To save memory: include PDF context only for the latest question.
     const history: ChatMsg[] = next.map((m, i) => ({
       role: m.role,
       content: i === next.length - 1 && m.modelText ? m.modelText : m.text,
@@ -101,15 +101,15 @@ export function ChatScreen() {
     } finally {
       deactivateKeepAwake('gen');
     }
-    setMsgs((m) => [...m, { id: Date.now() + 'a', role: 'assistant', text: answer.trim() || '(walang sagot)' }]);
+    setMsgs((m) => [...m, { id: Date.now() + 'a', role: 'assistant', text: answer.trim() || '(no answer)' }]);
     setStreaming(null);
     setBusy(false);
   };
 
   const newChat = () =>
-    Alert.alert('Bagong chat?', 'Mabubura ang kasalukuyang usapan.', [
-      { text: 'Huwag', style: 'cancel' },
-      { text: 'Oo', onPress: () => setMsgs([]) },
+    Alert.alert('New chat?', 'The current conversation will be cleared.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: () => setMsgs([]) },
     ]);
 
   const data: Msg[] = streaming !== null ? [...msgs, { id: 'stream', role: 'assistant', text: streaming || '…' }] : msgs;
@@ -121,15 +121,15 @@ export function ChatScreen() {
           <Text style={styles.title}>Neo.1</Text>
           <EnginePill />
         </View>
-        {msgs.length > 0 && <Button title="Bagong chat" kind="ghost" small onPress={newChat} disabled={busy} />}
+        {msgs.length > 0 && <Button title="New chat" kind="ghost" small onPress={newChat} disabled={busy} />}
       </View>
 
       {activeDoc && (
         <View style={styles.docBanner}>
           <Text style={styles.docBannerText} numberOfLines={2}>
-            📄 Nagtatanong tungkol sa: <Text style={{ fontWeight: '800' }}>{activeDoc.name}</Text>
+            📄 Asking about: <Text style={{ fontWeight: '800' }}>{activeDoc.name}</Text>
           </Text>
-          <Pressable onPress={() => setActiveDoc(null)} hitSlop={12} accessibilityLabel="Alisin ang PDF">
+          <Pressable onPress={() => setActiveDoc(null)} hitSlop={12} accessibilityLabel="Remove PDF">
             <Text style={styles.docBannerX}>✕</Text>
           </Pressable>
         </View>
@@ -145,10 +145,10 @@ export function ChatScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>📚</Text>
-            <Text style={styles.emptyTitle}>Kumusta! Ano ang pag-aaralan natin?</Text>
+            <Text style={styles.emptyTitle}>Hi! What are we studying today?</Text>
             <Text style={styles.emptySub}>
-              Magtanong ka kahit walang load o data. Sasagot ako sa Taglish.
-              {!modelPath ? '\n\nPero una, i-setup muna ang AI model sa "AI Model" tab.' : ''}
+              Ask anything — no load or mobile data needed. I'll answer in Taglish.
+              {!modelPath ? '\n\nBut first, set up the AI model in the "AI Model" tab.' : ''}
             </Text>
             <View style={{ gap: 8, marginTop: 14, alignSelf: 'stretch' }}>
               {SUGGESTIONS.map((s) => (
@@ -183,7 +183,7 @@ export function ChatScreen() {
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          placeholder={activeDoc ? 'Magtanong tungkol sa PDF…' : 'Itanong mo dito…'}
+          placeholder={activeDoc ? 'Ask about this PDF…' : 'Type your question…'}
           placeholderTextColor={colors.muted}
           multiline
           maxLength={2000}

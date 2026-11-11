@@ -13,8 +13,8 @@ import { engine } from './src/llm/engine';
 import type { DocMeta } from './src/docs/store';
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'chat', label: 'Tanong', icon: '💬' },
-  { key: 'pdf', label: 'Mga PDF', icon: '📄' },
+  { key: 'chat', label: 'Ask', icon: '💬' },
+  { key: 'pdf', label: 'PDFs', icon: '📄' },
   { key: 'model', label: 'AI Model', icon: '🧠' },
 ];
 
@@ -23,7 +23,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(modelPath ? 'chat' : 'model');
   const [activeDoc, setActiveDoc] = useState<DocMeta | null>(null);
 
-  // I-load agad ang model kapag naka-install na.
+  // Load the model right away if it is installed.
   useEffect(() => {
     if (modelPath && engine.getState().status === 'idle') engine.load(modelPath).catch(() => {});
   }, [modelPath]);
@@ -39,7 +39,7 @@ export default function App() {
         <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
           <StatusBar style="dark" />
           <PdfExtractorHost />
-          {/* Naka-mount lahat para hindi maputol ang ginagawa ng AI kapag lumipat ng tab. */}
+          {/* Keep all screens mounted so AI work is not interrupted when switching tabs. */}
           <View style={[styles.screen, tab !== 'chat' && styles.hidden]}>
             <ChatScreen />
           </View>

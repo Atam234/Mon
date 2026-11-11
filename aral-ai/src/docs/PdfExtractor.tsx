@@ -4,9 +4,9 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import pdfjsHtml from './pdfjsHtml';
 
 /**
- * Nakatagong WebView na may pdf.js para kunin ang text ng PDF — 100% offline.
- * I-mount ang <PdfExtractorHost /> isang beses sa App, tapos tawagin ang
- * extractPdfText() kahit saan.
+ * Hidden WebView running pdf.js to extract PDF text — 100% offline.
+ * Mount <PdfExtractorHost /> once in App, then call
+ * extractPdfText() from anywhere.
  */
 
 type Job = {
@@ -23,7 +23,7 @@ const jobs = new Map<string, Job>();
 function waitReady(timeoutMs = 15000) {
   if (ready && webview) return Promise.resolve();
   return new Promise<void>((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error('Hindi nag-start ang PDF reader.')), timeoutMs);
+    const t = setTimeout(() => reject(new Error('The PDF reader failed to start.')), timeoutMs);
     readyWaiters.push(() => {
       clearTimeout(t);
       resolve();
@@ -79,7 +79,7 @@ export function PdfExtractorHost() {
       jobs.delete(msg.id);
       const m = String(msg.message || '');
       job.reject(
-        new Error(/password/i.test(m) ? 'Naka-password ang PDF na ito.' : 'Hindi mabasa ang PDF: ' + m),
+        new Error(/password/i.test(m) ? 'This PDF is password-protected.' : 'Could not read the PDF: ' + m),
       );
     }
   };
@@ -95,7 +95,7 @@ export function PdfExtractorHost() {
         onContentProcessDidTerminate={() => ref.current?.reload()}
         onRenderProcessGone={() => {
           ready = false;
-          jobs.forEach((j) => j.reject(new Error('Masyadong malaki ang PDF para sa phone na ito.')));
+          jobs.forEach((j) => j.reject(new Error('This PDF is too large for this phone.')));
           jobs.clear();
           ref.current?.reload();
         }}

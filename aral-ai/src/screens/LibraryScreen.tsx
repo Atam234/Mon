@@ -32,21 +32,21 @@ export function LibraryScreen() {
     const a = res.assets[0];
     const file = new File(a.uri);
     try {
-      if (file.size > MAX_PDF_BYTES) throw new Error('Masyadong malaki ang PDF (lampas 40 MB). Hatiin muna ito.');
+      if (file.size > MAX_PDF_BYTES) throw new Error('This PDF is too large (over 40 MB). Please split it first.');
       setImporting({ name: a.name, page: 0, total: 0 });
       const b64 = await file.base64();
       const pages = await extractPdfText(b64, (page, total) => setImporting({ name: a.name, page, total }));
       const chars = pages.reduce((n, p) => n + p.trim().length, 0);
       if (chars < 30) {
         throw new Error(
-          'Walang mabasang text sa PDF na ito. Baka scanned/picture ito. Subukan ang PDF na may "selectable" na text.',
+          'No readable text found in this PDF. It may be scanned/image-only. Try a PDF with selectable text.',
         );
       }
       const meta = await addDoc(a.name, pages);
       refresh();
       setOpen(meta);
     } catch (e: any) {
-      Alert.alert('Hindi ma-add ang PDF', String(e?.message ?? e));
+      Alert.alert('Could not add PDF', String(e?.message ?? e));
     } finally {
       setImporting(null);
       try {
@@ -61,10 +61,10 @@ export function LibraryScreen() {
   };
 
   const remove = (d: DocMeta) =>
-    Alert.alert('Burahin ang PDF?', d.name, [
-      { text: 'Huwag', style: 'cancel' },
+    Alert.alert('Delete this PDF?', d.name, [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Burahin',
+        text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           await deleteDoc(d.id);
@@ -91,28 +91,28 @@ export function LibraryScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
-      <Text style={styles.h1}>Mga PDF</Text>
+      <Text style={styles.h1}>PDFs</Text>
       <Text style={styles.sub}>
-        Ilagay dito ang mga module, handout, o reviewer mo. Pwede mong ipa-summarize o tanungin ang AI tungkol dito — offline.
+        Add your modules, handouts, or reviewers here. The AI can summarize them or answer questions about them — offline.
       </Text>
 
       {importing ? (
         <Card style={{ gap: 8 }}>
           <Text style={styles.cardTitle} numberOfLines={1}>
-            Binabasa: {importing.name}
+            Reading: {importing.name}
           </Text>
           <ProgressBar value={importing.total ? importing.page / importing.total : 0.03} />
           <Text style={styles.meta}>
-            {importing.total ? `Page ${importing.page} / ${importing.total}` : 'Binubuksan ang PDF…'}
+            {importing.total ? `Page ${importing.page} / ${importing.total}` : 'Opening PDF…'}
           </Text>
         </Card>
       ) : (
-        <Button title="＋  Magdagdag ng PDF" onPress={addPdf} />
+        <Button title="＋  Add a PDF" onPress={addPdf} />
       )}
 
       <View style={{ gap: 12, marginTop: 16 }}>
         {docs.length === 0 && !importing && (
-          <Text style={[styles.meta, { textAlign: 'center', marginTop: 24 }]}>Wala pang PDF. Pindutin ang button sa itaas.</Text>
+          <Text style={[styles.meta, { textAlign: 'center', marginTop: 24 }]}>No PDFs yet. Tap the button above.</Text>
         )}
         {docs.map((d) => (
           <Pressable key={d.id} onPress={() => setOpen(d)}>
@@ -124,13 +124,13 @@ export function LibraryScreen() {
                     {d.name}
                   </Text>
                   <Text style={styles.meta}>
-                    {d.pages} pages{d.summary ? ' · ✅ may buod na' : ''}
+                    {d.pages} pages{d.summary ? ' · ✅ summarized' : ''}
                   </Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Button title="💬 Magtanong" small onPress={() => ask(d)} style={{ flex: 1 }} />
-                <Button title="📝 Buod / Quiz" small kind="ghost" onPress={() => setOpen(d)} style={{ flex: 1 }} />
+                <Button title="💬 Ask" small onPress={() => ask(d)} style={{ flex: 1 }} />
+                <Button title="📝 Summary / Quiz" small kind="ghost" onPress={() => setOpen(d)} style={{ flex: 1 }} />
               </View>
             </Card>
           </Pressable>
@@ -158,11 +158,11 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
 
   const guard = () => {
     if (es.status !== 'ready') {
-      Alert.alert('Wala pang AI model', 'I-setup muna ang model sa "AI Model" tab.');
+      Alert.alert('No AI model yet', 'Set up the model first in the "AI Model" tab.');
       return false;
     }
     if (engine.isBusy()) {
-      Alert.alert('Busy pa ang AI', 'May sinasagot pa ito sa Tanong tab. Hintayin muna.');
+      Alert.alert('AI is busy', 'It is still answering in the Ask tab. Please wait.');
       return false;
     }
     return true;
@@ -174,7 +174,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
     const pages = await getPages(doc.id);
     const parts = splitForSummary(pages, f, t);
     if (!parts.length) {
-      Alert.alert('Walang text', 'Walang mabasang text sa mga page na iyan.');
+      Alert.alert('No text', 'No readable text on those pages.');
       return;
     }
     stopped.current = false;
@@ -184,24 +184,24 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
     try {
       for (let i = 0; i < parts.length; i++) {
         if (stopped.current) break;
-        setStatus(`Binabasa ang bahagi ${i + 1} sa ${parts.length}…`);
+        setStatus(`Reading part ${i + 1} of ${parts.length}…`);
         setProgress(i / (parts.length + (parts.length > 1 ? 1 : 0)));
-        const prev = partials.map((p, k) => `**Bahagi ${k + 1}**\n${p}`).join('\n\n');
+        const prev = partials.map((p, k) => `**Part ${k + 1}**\n${p}`).join('\n\n');
         const s = await engine.generate(
           [{ role: 'user', content: chunkSummaryPrompt(doc.name, i + 1, parts.length, parts[i]) }],
-          (txt) => setOutput((prev ? prev + '\n\n' : '') + `**Bahagi ${i + 1}**\n` + txt),
+          (txt) => setOutput((prev ? prev + '\n\n' : '') + `**Part ${i + 1}**\n` + txt),
           { maxTokens: 260, temperature: 0.3 },
         );
         partials.push(s.trim());
       }
-      let final = partials.length === 1 ? partials[0] : partials.map((p, k) => `**Bahagi ${k + 1}**\n${p}`).join('\n\n');
+      let final = partials.length === 1 ? partials[0] : partials.map((p, k) => `**Part ${k + 1}**\n${p}`).join('\n\n');
       if (partials.length > 1 && !stopped.current) {
-        // Kung masyadong marami, pagsama-samahin muna nang paunti-unti.
+        // If there are too many, merge them in stages first.
         let layer = partials;
         while (layer.join('\n').length > 6000 && !stopped.current) {
           const next: string[] = [];
           for (let i = 0; i < layer.length; i += 4) {
-            setStatus('Pinagsasama-sama ang mga buod…');
+            setStatus('Combining summaries…');
             next.push(
               await engine.generate(
                 [{ role: 'user', content: chunkSummaryPrompt(doc.name, next.length + 1, Math.ceil(layer.length / 4), layer.slice(i, i + 4).join('\n')) }],
@@ -213,7 +213,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
           layer = next;
         }
         if (!stopped.current) {
-          setStatus('Ginagawa ang final na reviewer…');
+          setStatus('Writing the final reviewer…');
           setProgress(parts.length / (parts.length + 1));
           final = await engine.generate([{ role: 'user', content: finalSummaryPrompt(doc.name, layer) }], setOutput, {
             maxTokens: 600,
@@ -221,11 +221,11 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
           });
         }
       }
-      const header = `_Buod ng page ${f}–${t}_\n\n`;
+      const header = `_Summary of pages ${f}–${t}_\n\n`;
       setOutput(header + final.trim());
       if (!stopped.current) await updateDoc(doc.id, { summary: header + final.trim() });
     } catch (e: any) {
-      Alert.alert('May error', String(e?.message ?? e));
+      Alert.alert('Error', String(e?.message ?? e));
     } finally {
       setStatus(null);
       setRunning(false);
@@ -242,7 +242,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
     const pick = parts[Math.floor(Math.random() * parts.length)];
     stopped.current = false;
     setRunning(true);
-    setStatus('Gumagawa ng practice quiz…');
+    setStatus('Creating a practice quiz…');
     setProgress(0.5);
     activateKeepAwakeAsync('sum').catch(() => {});
     try {
@@ -252,7 +252,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
       });
       setOutput(`_Practice quiz (page ${f}–${t})_\n\n` + q.trim());
     } catch (e: any) {
-      Alert.alert('May error', String(e?.message ?? e));
+      Alert.alert('Error', String(e?.message ?? e));
     } finally {
       setStatus(null);
       setRunning(false);
@@ -271,7 +271,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
   return (
     <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
       <Pressable onPress={onBack} disabled={running} hitSlop={10}>
-        <Text style={[styles.back, running && { opacity: 0.4 }]}>‹ Mga PDF</Text>
+        <Text style={[styles.back, running && { opacity: 0.4 }]}>‹ PDFs</Text>
       </Pressable>
       <Text style={styles.h1} numberOfLines={3}>
         {doc.name}
@@ -279,23 +279,23 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
       <Text style={styles.meta}>{doc.pages} pages</Text>
 
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-        <Button title="💬 Magtanong tungkol dito" onPress={onAsk} style={{ flex: 1 }} disabled={running} />
+        <Button title="💬 Ask about this PDF" onPress={onAsk} style={{ flex: 1 }} disabled={running} />
       </View>
 
       <Card style={{ marginTop: 14, gap: 10 }}>
-        <Text style={styles.cardTitle}>Anong pages ang pag-aaralan?</Text>
+        <Text style={styles.cardTitle}>Which pages do you want to study?</Text>
         <View style={styles.rangeRow}>
-          <Text style={styles.meta}>Mula page</Text>
+          <Text style={styles.meta}>From page</Text>
           <TextInput style={styles.num} keyboardType="number-pad" value={from} onChangeText={setFrom} editable={!running} />
-          <Text style={styles.meta}>hanggang</Text>
+          <Text style={styles.meta}>to</Text>
           <TextInput style={styles.num} keyboardType="number-pad" value={to} onChangeText={setTo} editable={!running} />
         </View>
         <Text style={styles.meta}>
-          {estParts} bahagi · mga {Math.max(1, Math.round((estParts * 35) / 60))} minuto sa karaniwang phone
-          {estParts > 12 ? '. Tip: paikliin ang page range para mas mabilis.' : ''}
+          {estParts} part(s) · about {Math.max(1, Math.round((estParts * 35) / 60))} min on a typical phone
+          {estParts > 12 ? '. Tip: use a shorter page range for faster results.' : ''}
         </Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Button title="📝 I-summarize" onPress={summarize} style={{ flex: 1 }} disabled={running} />
+          <Button title="📝 Summarize" onPress={summarize} style={{ flex: 1 }} disabled={running} />
           <Button title="❓ Quiz me" kind="accent" onPress={quiz} style={{ flex: 1 }} disabled={running} />
         </View>
       </Card>
@@ -304,7 +304,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
         <Card style={{ marginTop: 14, gap: 8 }}>
           <Text style={styles.meta}>{status}</Text>
           <ProgressBar value={progress} />
-          <Button title="Ihinto" kind="danger" small onPress={stop} />
+          <Button title="Stop" kind="danger" small onPress={stop} />
         </Card>
       )}
 
@@ -314,7 +314,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
         </Card>
       )}
 
-      <Button title="Burahin ang PDF na ito" kind="danger" small onPress={onDelete} style={{ marginTop: 24 }} disabled={running} />
+      <Button title="Delete this PDF" kind="danger" small onPress={onDelete} style={{ marginTop: 24 }} disabled={running} />
     </ScrollView>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, StyleSheet, type TextStyle } from 'react-native';
 import { colors } from '../theme';
 
-/** Maliit na markdown renderer: **bold**, *italic*, headings, bullets, numbered list. */
+/** Tiny markdown renderer: **bold**, *italic*, headings, bullets, numbered list. */
 function inline(text: string, base: TextStyle, keyPrefix: string) {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`)/g).filter(Boolean);
   return parts.map((p, i) => {

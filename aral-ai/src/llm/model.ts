@@ -2,12 +2,12 @@ import { Directory, File, Paths } from 'expo-file-system';
 import type { DownloadTask } from 'expo-file-system';
 
 export const MODEL_NAME = 'gemma-3-1b-it-Q8_0.gguf';
-/** Tantiyang laki ng Q8_0 file (~1.07 GB). Pang-display at pang-check lang. */
+/** Approximate size of the Q8_0 file (~1.07 GB). Used for display only. */
 export const MODEL_APPROX_BYTES = 1_069_000_000;
 
 /**
- * Mga pwedeng pagkunan ng model. Susubukan isa-isa kapag pumalya ang nauna.
- * Kailangan lang ng internet ISANG BESES (hal. sa school Wi-Fi o piso-WiFi).
+ * Download sources for the model, tried in order if one fails.
+ * Internet is needed only ONCE (e.g. school Wi-Fi or piso-WiFi).
  */
 export const MODEL_URLS = [
   'https://huggingface.co/unsloth/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q8_0.gguf?download=true',
@@ -24,7 +24,7 @@ function ensureDir() {
   if (!d.exists) d.create({ intermediates: true, idempotent: true });
 }
 
-/** Tinitingnan kung ang file ay totoong GGUF (nagsisimula sa "GGUF"). */
+/** Checks that the file is a real GGUF (starts with "GGUF"). */
 export function isGguf(file: File): boolean {
   try {
     const h = file.open();
@@ -69,8 +69,8 @@ export function downloadModel(onProgress: (written: number, total: number, sourc
         });
         const res = await current.downloadAsync();
         if (cancelled) break;
-        if (!res || !tmp.exists) throw new Error('Hindi natapos ang download.');
-        if (!isGguf(tmp)) throw new Error('Hindi GGUF ang na-download na file.');
+        if (!res || !tmp.exists) throw new Error('The download did not finish.');
+        if (!isGguf(tmp)) throw new Error('The downloaded file is not a GGUF model.');
         const dest = modelFile();
         if (dest.exists) dest.delete();
         tmp.move(dest);
@@ -83,8 +83,8 @@ export function downloadModel(onProgress: (written: number, total: number, sourc
     }
     const tmp = partFile();
     if (tmp.exists) tmp.delete();
-    if (cancelled) throw new Error('Kinansela ang download.');
-    throw lastErr instanceof Error ? lastErr : new Error('Hindi ma-download ang model.');
+    if (cancelled) throw new Error('Download cancelled.');
+    throw lastErr instanceof Error ? lastErr : new Error('Could not download the model.');
   })();
 
   return {
@@ -99,18 +99,18 @@ export function downloadModel(onProgress: (written: number, total: number, sourc
 }
 
 /**
- * Kopyahin sa app ang .gguf na nakuha mo sa ibang paraan
- * (hal. pinasa ng kaklase via Bluetooth/ShareMe/USB) — walang load na kailangan.
+ * Copy a .gguf obtained another way into the app
+ * (e.g. shared by a classmate via Bluetooth/ShareMe/USB) — no mobile data needed.
  */
 export async function importModelFromUri(uri: string): Promise<string> {
   ensureDir();
   const src = new File(uri);
   if (!isGguf(src)) {
-    throw new Error('Hindi valid na .gguf model file ang napili.');
+    throw new Error('The selected file is not a valid .gguf model.');
   }
   const dest = modelFile();
   if (dest.exists) dest.delete();
-  // Kung nasa cache (galing sa document picker), ilipat na lang para hindi doble ang space.
+  // If it is in the cache (from the document picker), move it instead of copying to save space.
   if (src.uri.startsWith(Paths.cache.uri)) src.move(dest);
   else await src.copy(dest);
   return dest.uri;

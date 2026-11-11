@@ -6,7 +6,7 @@ export type ChatMsg = { role: 'user' | 'assistant'; content: string };
 export const N_CTX = 4096;
 const STOP = ['<end_of_turn>', '<eos>', '<start_of_turn>'];
 
-/** Halos 3 characters bawat token (konserbatibo para sa Taglish). */
+/** Roughly 3 characters per token (conservative estimate). */
 export const estimateTokens = (s: string) => Math.ceil(s.length / 3);
 
 type Listener = (s: EngineState) => void;
@@ -48,7 +48,7 @@ export const engine = {
           n_ctx: N_CTX,
           n_batch: 512,
           use_mlock: false,
-          n_gpu_layers: 0, // CPU lang: pinaka-compatible sa karamihan ng phone
+          n_gpu_layers: 0, // CPU only: most compatible across phones
           ctx_shift: true,
         },
         (p) => setState({ status: 'loading', progress: p }),
@@ -61,7 +61,7 @@ export const engine = {
       setState({
         status: 'error',
         message:
-          'Hindi ma-load ang model. Baka kulang ang RAM ng phone (kailangan ~2 GB na libre) o sira ang file.\n\n' +
+          'Could not load the model. The phone may not have enough free RAM (~2 GB needed) or the file may be corrupted.\n\n' +
           String(e?.message ?? e),
       });
       throw e;
@@ -86,16 +86,16 @@ export const engine = {
   },
 
   /**
-   * Mag-generate ng sagot. Ang `history` ay pinuputol para kumasya sa context.
-   * Ang `onToken` ay tinatawag na may buong text hanggang ngayon.
+   * Generate a reply. `history` is trimmed to fit the context window.
+   * `onText` is called with the full text generated so far.
    */
   async generate(
     history: ChatMsg[],
     onText: (full: string) => void,
     opts: { maxTokens?: number; temperature?: number } = {},
   ): Promise<string> {
-    if (!ctx) throw new Error('Hindi pa naka-load ang AI model.');
-    if (busy) throw new Error('May sinasagot pa ang AI. Hintayin muna o pindutin ang Stop.');
+    if (!ctx) throw new Error('The AI model is not loaded yet.');
+    if (busy) throw new Error('The AI is still answering. Please wait or tap Stop.');
     busy = true;
     try {
       const maxTokens = opts.maxTokens ?? 700;
@@ -108,7 +108,7 @@ export const engine = {
         trimmed.unshift(history[i]);
         used += t;
       }
-      // Dapat user ang unang mensahe pagkatapos ng system (Gemma template).
+      // The first message after the system prompt must be from the user (Gemma template).
       while (trimmed.length && trimmed[0].role !== 'user') trimmed.shift();
 
       let text = '';

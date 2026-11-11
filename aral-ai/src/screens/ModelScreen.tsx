@@ -36,12 +36,12 @@ export function ModelScreen() {
 
   const startDownload = () => {
     Alert.alert(
-      'I-download ang AI model?',
-      `Mga ${formatBytes(MODEL_APPROX_BYTES)} ito. Gawin ito sa Wi-Fi (school, bahay, o piso-WiFi). ISANG BESES lang ito — pagkatapos, offline na lahat.`,
+      'Download the AI model?',
+      `It is about ${formatBytes(MODEL_APPROX_BYTES)}. Use Wi-Fi (school, home, or piso-WiFi). You only need to do this ONCE — after that, everything works offline.`,
       [
-        { text: 'Hindi muna', style: 'cancel' },
+        { text: 'Not now', style: 'cancel' },
         {
-          text: 'I-download',
+          text: 'Download',
           onPress: async () => {
             setDl({ written: 0, total: MODEL_APPROX_BYTES });
             activateKeepAwakeAsync('dl').catch(() => {});
@@ -51,7 +51,7 @@ export function ModelScreen() {
               const path = await h.done;
               await loadAndGo(path);
             } catch (e: any) {
-              Alert.alert('Hindi natuloy ang download', String(e?.message ?? e) + '\n\nSubukan ulit kapag maayos na ang internet.');
+              Alert.alert('Download failed', String(e?.message ?? e) + '\n\nPlease try again when your internet connection is stable.');
             } finally {
               handle.current = null;
               setDl(null);
@@ -68,7 +68,7 @@ export function ModelScreen() {
     if (res.canceled || !res.assets?.[0]) return;
     const a = res.assets[0];
     if (!/\.gguf$/i.test(a.name)) {
-      Alert.alert('Maling file', 'Pumili ng .gguf na file (hal. ' + MODEL_NAME + ').');
+      Alert.alert('Wrong file', 'Please choose a .gguf file (e.g. ' + MODEL_NAME + ').');
       return;
     }
     setImporting(true);
@@ -76,7 +76,7 @@ export function ModelScreen() {
       const path = await importModelFromUri(a.uri);
       await loadAndGo(path);
     } catch (e: any) {
-      Alert.alert('Hindi ma-import', String(e?.message ?? e));
+      Alert.alert('Import failed', String(e?.message ?? e));
     } finally {
       setImporting(false);
     }
@@ -85,17 +85,17 @@ export function ModelScreen() {
   const shareModel = async () => {
     if (!installed) return;
     if (!(await Sharing.isAvailableAsync())) {
-      Alert.alert('Hindi available', 'Walang share feature sa phone na ito.');
+      Alert.alert('Not available', 'Sharing is not available on this phone.');
       return;
     }
-    await Sharing.shareAsync(installed.path, { dialogTitle: 'I-share ang AI model sa kaklase', mimeType: 'application/octet-stream' });
+    await Sharing.shareAsync(installed.path, { dialogTitle: 'Share the AI model with a classmate', mimeType: 'application/octet-stream' });
   };
 
   const remove = () =>
-    Alert.alert('Burahin ang AI model?', 'Kailangan mo ulit itong i-download o i-import para magamit ang app.', [
-      { text: 'Huwag', style: 'cancel' },
+    Alert.alert('Delete the AI model?', 'You will need to download or import it again to use the app.', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Burahin',
+        text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           await engine.unload();
@@ -109,64 +109,64 @@ export function ModelScreen() {
     <ScrollView contentContainerStyle={styles.wrap}>
       <Text style={styles.h1}>AI Model</Text>
       <Text style={styles.sub}>
-        Gumagamit ang Neo.1 ng <Text style={styles.b}>Gemma 3 1B</Text> (Q8_0) na tumatakbo mismo sa phone mo. Walang load,
-        walang data — pagka-install, kahit naka-airplane mode ka pa.
+        Neo.1 uses <Text style={styles.b}>Gemma 3 1B</Text> (Q8_0), running entirely on your phone. No load, no
+        mobile data — once installed, it works even in airplane mode.
       </Text>
 
       {installed ? (
         <Card style={{ gap: 12 }}>
-          <Text style={styles.cardTitle}>✅ Naka-install na ang model</Text>
+          <Text style={styles.cardTitle}>✅ Model installed</Text>
           <Text style={styles.meta}>
             {MODEL_NAME} · {formatBytes(installed.size)}
           </Text>
           {es.status === 'loading' && (
             <View style={{ gap: 6 }}>
-              <Text style={styles.meta}>Nilo-load sa memory… {Math.round(es.progress)}%</Text>
+              <Text style={styles.meta}>Loading into memory… {Math.round(es.progress)}%</Text>
               <ProgressBar value={es.progress / 100} />
             </View>
           )}
-          {es.status === 'ready' && <Text style={[styles.meta, { color: colors.primary }]}>Handa na! Pumunta sa Tanong tab.</Text>}
+          {es.status === 'ready' && <Text style={[styles.meta, { color: colors.primary }]}>Ready! Go to the Ask tab.</Text>}
           {es.status === 'error' && <Text style={[styles.meta, { color: colors.danger }]}>{es.message}</Text>}
           {(es.status === 'idle' || es.status === 'error') && (
-            <Button title="I-load ang model" onPress={() => loadAndGo(installed.path)} />
+            <Button title="Load model" onPress={() => loadAndGo(installed.path)} />
           )}
-          <Button title="📤  I-share sa kaklase (Bluetooth / Nearby)" kind="ghost" onPress={shareModel} />
-          <Button title="Burahin ang model" kind="danger" small onPress={remove} />
+          <Button title="📤  Share with a classmate (Bluetooth / Nearby)" kind="ghost" onPress={shareModel} />
+          <Button title="Delete model" kind="danger" small onPress={remove} />
         </Card>
       ) : (
         <>
           <Card style={{ gap: 12 }}>
-            <Text style={styles.cardTitle}>Option 1: I-download (isang beses lang)</Text>
-            <Text style={styles.meta}>Mga {formatBytes(MODEL_APPROX_BYTES)} — gamitin ang Wi-Fi.</Text>
+            <Text style={styles.cardTitle}>Option 1: Download (one time only)</Text>
+            <Text style={styles.meta}>About {formatBytes(MODEL_APPROX_BYTES)} — use Wi-Fi.</Text>
             {dl ? (
               <View style={{ gap: 8 }}>
                 <ProgressBar value={dl.written / dl.total} />
                 <Text style={styles.meta}>
                   {formatBytes(dl.written)} / {formatBytes(dl.total)} ({Math.floor((dl.written / dl.total) * 100)}%)
                 </Text>
-                <Button title="Ihinto" kind="ghost" small onPress={() => handle.current?.cancel()} />
+                <Button title="Stop" kind="ghost" small onPress={() => handle.current?.cancel()} />
               </View>
             ) : (
-              <Button title="⬇️  I-download ang AI model" onPress={startDownload} disabled={importing} />
+              <Button title="⬇️  Download AI model" onPress={startDownload} disabled={importing} />
             )}
           </Card>
 
           <Card style={{ gap: 12, marginTop: 14 }}>
-            <Text style={styles.cardTitle}>Option 2: Kunin sa kaklase (walang load!)</Text>
+            <Text style={styles.cardTitle}>Option 2: Get it from a classmate (no load needed!)</Text>
             <Text style={styles.meta}>
-              Kung may kaklase kang may Neo.1 na, ipa-share sa kanya ang model file (Bluetooth, Nearby Share, ShareMe, o USB).
-              Tapos piliin dito ang <Text style={styles.b}>.gguf</Text> file.
+              If a classmate already has Neo.1, ask them to share the model file (Bluetooth, Nearby Share, ShareMe, or USB).
+              Then pick the <Text style={styles.b}>.gguf</Text> file here.
             </Text>
-            <Button title="📁  Pumili ng .gguf file" kind="ghost" onPress={importFile} loading={importing} disabled={!!dl} />
+            <Button title="📁  Choose a .gguf file" kind="ghost" onPress={importFile} loading={importing} disabled={!!dl} />
           </Card>
         </>
       )}
 
       <Card style={{ marginTop: 14, backgroundColor: colors.accentSoft, borderColor: colors.accentSoft }}>
-        <Text style={styles.cardTitle}>💡 Paalala</Text>
-        <Text style={styles.tip}>• Kailangan ng phone na 64-bit, may 3 GB RAM pataas (mas maganda kung 4 GB).</Text>
-        <Text style={styles.tip}>• Mga 1.5 GB na libreng storage ang kailangan.</Text>
-        <Text style={styles.tip}>• Maliit na AI ito, kaya minsan nagkakamali. I-double check pa rin sa libro o sa teacher.</Text>
+        <Text style={styles.cardTitle}>💡 Notes</Text>
+        <Text style={styles.tip}>• Requires a 64-bit phone with 3 GB RAM or more (4 GB recommended).</Text>
+        <Text style={styles.tip}>• About 1.5 GB of free storage is needed.</Text>
+        <Text style={styles.tip}>• This is a small AI, so it can make mistakes. Always double-check with your book or teacher.</Text>
       </Card>
     </ScrollView>
   );
