@@ -1,48 +1,48 @@
-# 📚 Neo.1 — Offline na Study Buddy
+# Neo.1 — Offline Study Buddy
 
-Mobile app (Android) na may **built-in na local AI** — `gemma-3-1b-it-Q8_0` — para makapagtanong
-at makapag-review kahit **walang load, walang data, walang Wi-Fi**. Ginawa para sa mga estudyante
-at sa mga taong walang pang-load para mag-research online.
+An Android app with a **built-in local AI** — `gemma-3-1b-it-Q8_0` — so students can ask questions
+and review **without load, mobile data, or Wi-Fi**. Made for students and anyone who can't afford
+data to research online.
 
-- 💬 **Tanong** — magtanong ng kahit ano tungkol sa pinag-aaralan mo. Laging **Taglish** ang sagot.
-- 📄 **Mga PDF** — ilagay ang module, handout, o reviewer mo (PDF). Pwede mong:
-  - **Magtanong tungkol dito** — hahanapin ng app ang mga related na bahagi ng PDF at doon ibabase ng AI ang sagot (may page number pa).
-  - **I-summarize** — gagawa ng reviewer: buod, key points, at mga terms na dapat tandaan.
-  - **Quiz me** — gagawa ng 5 practice questions (multiple choice) mula sa PDF.
-- 🧠 **AI Model** — i-download ang model **isang beses lang**, o **kunin sa kaklase** (Bluetooth / Nearby Share / USB)
-  para hindi na kailangan ng internet kahit kailan. May button din para i-share mo ang model sa iba.
+- 💬 **Ask** — ask anything about what you're studying. The AI always answers in **Taglish**.
+- 📄 **PDFs** — add your modules, handouts, or reviewers (PDF). You can:
+  - **Ask about it** — the app finds the most relevant parts of the PDF and the AI answers from them (with page numbers).
+  - **Summarize** — creates a reviewer: summary, key points, and terms to remember.
+  - **Quiz me** — creates 5 multiple-choice practice questions from the PDF.
+- 🧠 **AI Model** — download the model **once**, or **get it from a classmate** (Bluetooth / Nearby Share / USB)
+  so you never need internet at all. There's also a button to share the model with others.
 
-Lahat ng processing ay nasa phone mismo — walang pinapadala sa internet ang mga tanong o PDF mo.
+Everything runs on the phone — your questions and PDFs are never sent to the internet.
 
-## Paano ito gumagana
+## How it works
 
-| Bahagi | Gamit |
+| Part | Details |
 | --- | --- |
-| AI engine | [`llama.rn`](https://github.com/mybigday/llama.rn) (llama.cpp para sa React Native), CPU lang para compatible sa karamihan ng phone |
-| Model | Gemma 3 1B Instruct, GGUF Q8_0 (~1.07 GB), context na 4096 tokens |
-| Taglish | Naka-set sa system prompt (`src/prompts.ts`) na laging Taglish ang sagot, simple, at tapat kapag hindi sigurado |
-| PDF reading | `pdf.js` na naka-bundle sa loob ng nakatagong WebView — 100% offline (`src/docs/PdfExtractor.tsx`) |
-| Tanong sa PDF | Offline na BM25 search (`src/docs/retrieval.ts`) para piliin ang 3 pinaka-related na bahagi ng PDF |
-| Summary ng mahabang PDF | Hinahati sa mga bahagi → summary bawat bahagi → pinagsasama sa isang reviewer |
+| AI engine | [`llama.rn`](https://github.com/mybigday/llama.rn) (llama.cpp for React Native), CPU only for wide device compatibility |
+| Model | Gemma 3 1B Instruct, GGUF Q8_0 (~1.07 GB), 4096-token context |
+| Taglish | Set in the system prompt (`src/prompts.ts`): always Taglish, simple, and honest when unsure |
+| PDF reading | `pdf.js` bundled inside a hidden WebView — 100% offline (`src/docs/PdfExtractor.tsx`) |
+| Questions about a PDF | Offline BM25 search (`src/docs/retrieval.ts`) picks the 3 most relevant passages |
+| Summarizing long PDFs | Split into parts → summarize each part → combine into one reviewer |
 
-## Requirements ng phone
+## Phone requirements
 
-- Android 8.0 pataas, **64-bit (arm64)**
-- **3 GB RAM** pataas (mas maganda kung 4 GB)
-- Mga **1.5 GB** na libreng storage
+- Android 8.0 or newer, **64-bit (arm64)**
+- **3 GB RAM** or more (4 GB recommended)
+- About **1.5 GB** of free storage
 
-> Ang scanned PDF (picture lang, walang selectable na text) ay hindi pa mababasa.
+> Scanned PDFs (images only, no selectable text) can't be read yet.
 
-## Paano kunin ang APK
+## Getting the APK
 
-### Option A: GitHub Actions (walang kailangang i-install)
-1. Pumunta sa **Actions** tab ng repo → **Neo.1 — Build Android APK** → **Run workflow**
-   (awtomatiko rin itong tumatakbo kapag may binago sa `aral-ai/`).
-2. Pagkatapos (~15–25 min), i-download ang `neo1-apk` sa ilalim ng run.
-3. I-install ang `app-release.apk` sa phone (i-allow ang "Install unknown apps").
+### Option A: GitHub Actions (nothing to install)
+1. Go to the repo's **Actions** tab → **Neo.1 — Build Android APK** → **Run workflow**
+   (it also runs automatically when anything in `aral-ai/` changes).
+2. When it finishes (~10 min), download `neo1-apk` from the run's Artifacts section.
+3. Unzip it and install `app-release.apk` on your phone (allow "Install unknown apps").
 
-### Option B: I-build sa sariling computer
-Kailangan: Node 22, JDK 17, Android SDK + NDK (Android Studio).
+### Option B: Build on your own computer
+Requires Node 22, JDK 17, Android SDK + NDK (Android Studio).
 
 ```bash
 cd aral-ai
@@ -51,41 +51,41 @@ npm run build:apk
 # APK: android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Para sa development (may phone na naka-USB):
+For development with a phone connected over USB:
 
 ```bash
 npx expo run:android
 ```
 
-> Hindi ito gagana sa **Expo Go** kasi may native code (llama.cpp). Gumamit ng development build.
+> This won't work in **Expo Go** because it contains native code (llama.cpp). Use a development build.
 
-## Unang gamit
+## First run
 
-1. Buksan ang app → **AI Model** tab.
-2. Piliin ang isa:
-   - **I-download** (mga 1.07 GB, sa Wi-Fi) — isang beses lang, o
-   - **Pumili ng .gguf file** na ipinasa ng kaklase.
-3. Hintayin mag-load (ilang segundo), tapos pumunta sa **Tanong** tab. Offline na lahat!
+1. Open the app → **AI Model** tab.
+2. Choose one:
+   - **Download** (~1.07 GB, over Wi-Fi) — one time only, or
+   - **Choose a .gguf file** shared by a classmate.
+3. Wait for it to load (a few seconds), then go to the **Ask** tab. Everything now works offline!
 
-## Mga file
+## Files
 
 ```
 aral-ai/
-├── App.tsx                     # tabs + pag-load ng model
-├── src/prompts.ts              # Taglish system prompt + mga prompt sa summary/quiz/PDF
+├── App.tsx                     # tabs + model loading
+├── src/prompts.ts              # Taglish system prompt + summary/quiz/PDF prompts
 ├── src/llm/engine.ts           # llama.rn wrapper (load, generate, stop)
-├── src/llm/model.ts            # download / import / share ng GGUF model
-├── src/docs/PdfExtractor.tsx   # offline PDF → text (pdf.js sa WebView)
+├── src/llm/model.ts            # download / import / share the GGUF model
+├── src/docs/PdfExtractor.tsx   # offline PDF → text (pdf.js in a WebView)
 ├── src/docs/pdfjsHtml.js       # generated: `npm run gen:pdfjs`
 ├── src/docs/retrieval.ts       # chunking + BM25 search
-├── src/docs/store.ts           # local library ng mga PDF
-└── src/screens/                # Chat, Mga PDF, AI Model
+├── src/docs/store.ts           # local PDF library
+└── src/screens/                # Ask, PDFs, AI Model
 ```
 
-## Paalala
+## Note
 
-Maliit na model (1B) ito kaya **pwede itong magkamali**. Gamitin ito bilang study buddy,
-hindi bilang kapalit ng libro o ng teacher. I-double check ang mga importanteng sagot.
+This is a small model (1B), so **it can make mistakes**. Use it as a study buddy,
+not a replacement for your books or teachers. Double-check important answers.
 
-Model: [Gemma 3](https://ai.google.dev/gemma) ng Google — saklaw ng Gemma Terms of Use.
+Model: [Gemma 3](https://ai.google.dev/gemma) by Google — subject to the Gemma Terms of Use.
 PDF reader: [pdf.js](https://github.com/mozilla/pdf.js) (Apache-2.0).
