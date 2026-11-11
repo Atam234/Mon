@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { colors, radius } from '../theme';
 import { useApp } from '../AppContext';
 import { Button, Card, ProgressBar, useEngineState } from '../components/ui';
@@ -90,7 +91,7 @@ export function LibraryScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <KeyboardAwareScrollView bottomOffset={32} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.wrap}>
       <Text style={styles.h1}>PDFs</Text>
       <Text style={styles.sub}>
         Add your modules, handouts, or reviewers here. The AI can summarize them or answer questions about them — offline.
@@ -136,7 +137,7 @@ export function LibraryScreen() {
           </Pressable>
         ))}
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -269,7 +270,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
   const estParts = Math.max(1, Math.ceil(((t - f + 1) / doc.pages) * (doc.chars / 2800)));
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView bottomOffset={32} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.wrap}>
       <Pressable onPress={onBack} disabled={running} hitSlop={10}>
         <Text style={[styles.back, running && { opacity: 0.4 }]}>‹ PDFs</Text>
       </Pressable>
@@ -315,7 +316,7 @@ function DocView({ doc, onBack, onAsk, onDelete }: { doc: DocMeta; onBack: () =>
       )}
 
       <Button title="Delete this PDF" kind="danger" small onPress={onDelete} style={{ marginTop: 24 }} disabled={running} />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

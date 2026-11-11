@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Button, Card, ProgressBar, useEngineState } from '../components/ui';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { colors } from '../theme';
 import { useApp } from '../AppContext';
 import { engine } from '../llm/engine';
@@ -106,7 +107,7 @@ export function ModelScreen() {
     ]);
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <KeyboardAwareScrollView bottomOffset={32} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.wrap}>
       <Text style={styles.h1}>AI Model</Text>
       <Text style={styles.sub}>
         Neo.1 uses <Text style={styles.b}>Gemma 3 1B</Text> (Q8_0), running entirely on your phone. No load, no
@@ -168,7 +169,7 @@ export function ModelScreen() {
         <Text style={styles.tip}>• About 1.5 GB of free storage is needed.</Text>
         <Text style={styles.tip}>• This is a small AI, so it can make mistakes. Always double-check with your book or teacher.</Text>
       </Card>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

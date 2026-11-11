@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AppContext, type Tab } from './src/AppContext';
 import { colors } from './src/theme';
 import { ChatScreen } from './src/screens/ChatScreen';
@@ -35,6 +36,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <KeyboardProvider>
       <AppContext.Provider value={ctx}>
         <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
           <StatusBar style="dark" />
@@ -69,6 +71,7 @@ export default function App() {
           </View>
         </SafeAreaView>
       </AppContext.Provider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

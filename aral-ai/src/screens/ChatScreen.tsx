@@ -2,14 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { colors, radius } from '../theme';
@@ -115,7 +114,7 @@ export function ChatScreen() {
   const data: Msg[] = streaming !== null ? [...msgs, { id: 'stream', role: 'assistant', text: streaming || '…' }] : msgs;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Neo.1</Text>
@@ -141,6 +140,7 @@ export function ChatScreen() {
         keyExtractor={(m) => m.id}
         contentContainerStyle={styles.list}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+        onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.empty}>
