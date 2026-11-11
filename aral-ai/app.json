@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Aral AI",
+    "slug": "aral-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#F5F2EA",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F2EA"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ph.aralai.offline"
+    },
+    "android": {
+      "package": "ph.aralai.offline",
+      "adaptiveIcon": {
+        "backgroundColor": "#2E6B5E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": [
+              "arm64-v8a"
+            ],
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      "expo-sharing",
+      [
+        "llama.rn",
+        {
+          "enableOpenCLAndHexagon": false
+        }
+      ]
+    ]
+  }
+}

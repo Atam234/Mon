@@ -1,0 +1,50 @@
+name: Aral AI — Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'aral-ai/**'
+      - '.github/workflows/aral-ai-android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: aral-ai
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: aral-ai/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies (kasama ang llama.cpp native libs)
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK
+        working-directory: aral-ai/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aral-ai-apk
+          path: aral-ai/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
