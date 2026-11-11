@@ -39,6 +39,17 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
+      - name: Install Android NDK (with retries)
+        run: |
+          NDK=$(grep -E '^ndkVersion' node_modules/react-native/gradle/libs.versions.toml | cut -d'"' -f2)
+          echo "NDK version: $NDK"
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          for i in 1 2 3 4; do
+            yes | "$SDKM" --install "ndk;$NDK" > /dev/null && break
+            echo "NDK install failed (attempt $i), retrying..."; sleep $((i * 10))
+          done
+          test -d "$ANDROID_HOME/ndk/$NDK"
+
       - name: Build release APK
         working-directory: aral-ai/android
         run: ./gradlew assembleRelease --no-daemon
