@@ -1,0 +1,85 @@
+/**
+ * Bumubuo ng src/docs/pdfjsHtml.js — isang HTML page (bilang string) na may
+ * kasamang pdf.js at worker nito, para gumana ang pagbasa ng PDF kahit OFFLINE
+ * sa loob ng isang nakatagong WebView.
+ *
+ * Patakbuhin:  node scripts/gen-pdfjs-html.js
+ */
+const fs = require('fs');
+const path = require('path');
+
+const root = path.join(__dirname, '..');
+const pdfjsDir = path.join(root, 'node_modules', 'pdfjs-dist', 'build');
+const lib = fs.readFileSync(path.join(pdfjsDir, 'pdf.min.js'), 'utf8');
+const worker = fs.readFileSync(path.join(pdfjsDir, 'pdf.worker.min.js'), 'utf8');
+
+const safe = (s) => s.replace(/<\/script/gi, '<\\/script');
+
+const runtime = `
+(function () {
+  var send = function (obj) { window.ReactNativeWebView.postMessage(JSON.stringify(obj)); };
+  var workerCode = document.getElementById('pdf-worker').textContent;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([workerCode], { type: 'text/javascript' }));
+
+  function b64ToBytes(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function extract(job) {
+    try {
+      var pdf = await pdfjsLib.getDocument({ data: b64ToBytes(job.base64), isEvalSupported: false }).promise;
+      var pages = [];
+      for (var p = 1; p <= pdf.numPages; p++) {
+        var page = await pdf.getPage(p);
+        var content = await page.getTextContent();
+        var out = '';
+        for (var k = 0; k < content.items.length; k++) {
+          var it = content.items[k];
+          if (typeof it.str !== 'string') continue;
+          out += it.str;
+          out += it.hasEOL ? '\\n' : (it.str.endsWith(' ') ? '' : ' ');
+        }
+        pages.push(out.replace(/[ \\t]+/g, ' ').replace(/\\n\\s*\\n\\s*\\n+/g, '\\n\\n').trim());
+        page.cleanup();
+        send({ type: 'progress', id: job.id, page: p, total: pdf.numPages });
+      }
+      await pdf.destroy();
+      send({ type: 'done', id: job.id, pages: pages });
+    } catch (e) {
+      send({ type: 'error', id: job.id, message: String((e && e.message) || e) });
+    }
+  }
+
+  function onMessage(ev) {
+    var job;
+    try { job = JSON.parse(ev.data); } catch (e) { return; }
+    if (job && job.type === 'extract') extract(job);
+  }
+  document.addEventListener('message', onMessage);
+  window.addEventListener('message', onMessage);
+  send({ type: 'ready' });
+})();
+`;
+
+const html =
+  '<!doctype html><html><head><meta charset="utf-8"></head><body>' +
+  '<script type="text/plain" id="pdf-worker">' + safe(worker) + '</script>' +
+  '<script>' + safe(lib) + '</script>' +
+  '<script>' + runtime + '</script>' +
+  '</body></html>';
+
+const outJs = path.join(root, 'src', 'docs', 'pdfjsHtml.js');
+fs.writeFileSync(
+  outJs,
+  '// AUTO-GENERATED ng scripts/gen-pdfjs-html.js — huwag i-edit nang mano-mano.\n' +
+    '// pdf.js (Mozilla, Apache-2.0) v3.11.174\n' +
+    'module.exports = ' + JSON.stringify(html) + ';\n'
+);
+fs.writeFileSync(
+  path.join(root, 'src', 'docs', 'pdfjsHtml.d.ts'),
+  'declare const html: string;\nexport = html;\n'
+);
+console.log('Nagawa:', path.relative(root, outJs), (html.length / 1024).toFixed(0) + ' KB');
