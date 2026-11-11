@@ -109,7 +109,7 @@ export function ModelScreen() {
     <ScrollView contentContainerStyle={styles.wrap}>
       <Text style={styles.h1}>AI Model</Text>
       <Text style={styles.sub}>
-        Gumagamit ang Aral AI ng <Text style={styles.b}>Gemma 3 1B</Text> (Q8_0) na tumatakbo mismo sa phone mo. Walang load,
+        Gumagamit ang Neo.1 ng <Text style={styles.b}>Gemma 3 1B</Text> (Q8_0) na tumatakbo mismo sa phone mo. Walang load,
         walang data — pagka-install, kahit naka-airplane mode ka pa.
       </Text>
 
@@ -154,7 +154,7 @@ export function ModelScreen() {
           <Card style={{ gap: 12, marginTop: 14 }}>
             <Text style={styles.cardTitle}>Option 2: Kunin sa kaklase (walang load!)</Text>
             <Text style={styles.meta}>
-              Kung may kaklase kang may Aral AI na, ipa-share sa kanya ang model file (Bluetooth, Nearby Share, ShareMe, o USB).
+              Kung may kaklase kang may Neo.1 na, ipa-share sa kanya ang model file (Bluetooth, Nearby Share, ShareMe, o USB).
               Tapos piliin dito ang <Text style={styles.b}>.gguf</Text> file.
             </Text>
             <Button title="📁  Pumili ng .gguf file" kind="ghost" onPress={importFile} loading={importing} disabled={!!dl} />

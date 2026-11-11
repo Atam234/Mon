@@ -1,4 +1,4 @@
-name: Aral AI — Build Android APK
+name: Neo.1 — Build Android APK
 
 on:
   workflow_dispatch:
@@ -45,6 +45,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: aral-ai-apk
+          name: neo1-apk
           path: aral-ai/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error

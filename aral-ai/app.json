@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Aral AI",
+    "name": "Neo.1",
     "slug": "aral-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "backgroundColor": "#F5F2EA",
+    "backgroundColor": "#0B1426",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F2EA"
+      "backgroundColor": "#0B1426"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,10 +18,9 @@
     "android": {
       "package": "ph.aralai.offline",
       "adaptiveIcon": {
-        "backgroundColor": "#2E6B5E",
+        "backgroundColor": "#0B1426",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize"

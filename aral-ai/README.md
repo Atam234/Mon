@@ -1,4 +1,4 @@
-# 📚 Aral AI — Offline na Study Buddy
+# 📚 Neo.1 — Offline na Study Buddy
 
 Mobile app (Android) na may **built-in na local AI** — `gemma-3-1b-it-Q8_0` — para makapagtanong
 at makapag-review kahit **walang load, walang data, walang Wi-Fi**. Ginawa para sa mga estudyante
@@ -36,9 +36,9 @@ Lahat ng processing ay nasa phone mismo — walang pinapadala sa internet ang mg
 ## Paano kunin ang APK
 
 ### Option A: GitHub Actions (walang kailangang i-install)
-1. Pumunta sa **Actions** tab ng repo → **Aral AI — Build Android APK** → **Run workflow**
+1. Pumunta sa **Actions** tab ng repo → **Neo.1 — Build Android APK** → **Run workflow**
    (awtomatiko rin itong tumatakbo kapag may binago sa `aral-ai/`).
-2. Pagkatapos (~15–25 min), i-download ang `aral-ai-apk` sa ilalim ng run.
+2. Pagkatapos (~15–25 min), i-download ang `neo1-apk` sa ilalim ng run.
 3. I-install ang `app-release.apk` sa phone (i-allow ang "Install unknown apps").
 
 ### Option B: I-build sa sariling computer

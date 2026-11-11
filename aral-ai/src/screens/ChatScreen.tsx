@@ -118,7 +118,7 @@ export function ChatScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Aral AI</Text>
+          <Text style={styles.title}>Neo.1</Text>
           <EnginePill />
         </View>
         {msgs.length > 0 && <Button title="Bagong chat" kind="ghost" small onPress={newChat} disabled={busy} />}
